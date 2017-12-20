@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rotate
+    android:pivotX="50%"
+    android:pivotY="50%"
+    android:fromDegrees="0"
+    android:toDegrees="360"
+    android:duration="1500"
+    android:repeatCount="infinite"
+    
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    
+<!-- 
+	pivotX/Y: 图片一开始出现的位置
+	fromDegrees ：开始旋转时图片摆放的倾斜度
+	toDegrees：结束度数   
+	duration：整个过程 1.5秒
+	repeatCount： 重复次数
+	-->
+</rotate>

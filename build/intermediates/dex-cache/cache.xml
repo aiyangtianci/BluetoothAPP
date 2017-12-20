@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        is-multidex="true"
+        jar="/Users/djmsh/bluetoothdemo/app/build/intermediates/incremental-classes/debug/instant-run-bootstrap.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="26.0.0"
+        sha1="5ffca9828b3e3c32829c9797d9f95e50dcaa21f9">
+        <dex dex="/Users/djmsh/bluetoothdemo/app/build/intermediates/transforms/dex/debug/folders/1000/10000/instant-run-bootstrap_cdfc26485415af4a667fe7a002f88eec1f514c74/classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="/Users/djmsh/bluetoothdemo/app/build/intermediates/incremental-runtime-classes/debug/instant-run.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="26.0.0"
+        sha1="3be78ebc2706b2e1fe2f12d5726887a92d6c183b">
+        <dex dex="/Users/djmsh/bluetoothdemo/app/build/intermediates/transforms/dex/debug/folders/1000/10000/instant-run_69130498303798c8d58ca069b3037569a459521c/classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="/Users/djmsh/.gradle/caches/modules-2/files-2.1/com.github.promeg/tinypinyin/1.0.0/a48301534bbc8eea481f61fa8fbdee80eca49d15/tinypinyin-1.0.0.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="26.0.0"
+        sha1="a48301534bbc8eea481f61fa8fbdee80eca49d15">
+        <dex dex="/Users/djmsh/bluetoothdemo/app/build/intermediates/transforms/dex/debug/folders/1000/10/tinypinyin-1.0.0_9000643228f344a81e6ec69bf6d769f2dcd6f9f6/classes.dex" />
+    </item>
+
+</items>
