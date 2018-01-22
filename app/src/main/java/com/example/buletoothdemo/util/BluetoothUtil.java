@@ -4,16 +4,14 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Handler;
+import android.util.Log;
 
 import com.example.buletoothdemo.entity.DatasEntity;
-
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.UUID;
@@ -27,13 +25,14 @@ public class BluetoothUtil {
     /**
      * 蓝牙器
      */
-    public static BluetoothAdapter mBluetoothAdapter(){
-       return BluetoothAdapter.getDefaultAdapter();
+    public static BluetoothAdapter mBluetoothAdapter() {
+        return BluetoothAdapter.getDefaultAdapter();
     }
 
 
     /**
      * 广播拦截
+     *
      * @return IntentFilter
      */
     public static IntentFilter makeFilters() {
@@ -48,19 +47,21 @@ public class BluetoothUtil {
     /**
      * 返回是否开启
      */
-    public static boolean isOpenBluetooth(){
+    public static boolean isOpenBluetooth() {
         if (BluetoothUtil.mBluetoothAdapter().isEnabled()) {//蓝牙已打开
             startGetBound();
             startSerch();
             return true;
-        }else{
+        } else {
             return false;
         }
     }
+
+
     /**
      * 蓝牙开关
      */
-    public static void switchBluetooth(Activity activity){
+    public static void switchBluetooth(Activity activity) {
         if (!mBluetoothAdapter().isEnabled()) {
             boolean enable = mBluetoothAdapter().enable(); //直接打开
             if (!enable) {  //申请权限打开失败
@@ -86,7 +87,7 @@ public class BluetoothUtil {
     /**
      * 开启搜索已配对设备
      */
-    public static void startGetBound(){
+    public static void startGetBound() {
         DatasEntity.mPairedDevices.clear();
         Set<BluetoothDevice> pairedDevices = mBluetoothAdapter().getBondedDevices();
         if (pairedDevices.size() > 0) {
@@ -95,21 +96,32 @@ public class BluetoothUtil {
             }
         }
     }
+
     /**
      * 发起配对
      */
-    public static void connectBound(){
-        if ( Comment.bluetoothDevice.getBondState() == BluetoothDevice.BOND_NONE) {
+    public static void connectBound() {
+        if (Comment.bluetoothDevice.getBondState() == BluetoothDevice.BOND_NONE) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                        Comment.bluetoothDevice.createBond();
+                    try {
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                            Comment.bluetoothDevice.createBond();
+                        } else {
+                            Method method =BluetoothDevice.class.getMethod("createBond");
+                            method.invoke(Comment.bluetoothDevice);
+                        }
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
             }).start();
         }
     }
+
     /**
      * 连接蓝牙
      */
@@ -120,9 +132,9 @@ public class BluetoothUtil {
             public void run() {
                 if (Comment.bluetoothDevice.getBondState() == BluetoothDevice.BOND_BONDED) {
                     try {
-                        if (Comment.bluetoothSocket != null){
+                        if (Comment.bluetoothSocket != null) {
                             Comment.bluetoothSocket.close();
-                            Comment.bluetoothSocket =null;
+                            Comment.bluetoothSocket = null;
                         }
                         if (Build.VERSION.SDK_INT >= 10) {
                             Comment.bluetoothSocket = Comment.bluetoothDevice.createInsecureRfcommSocketToServiceRecord(Comment.SPP_UUID);
@@ -158,39 +170,45 @@ public class BluetoothUtil {
 
     /**
      * 连接蓝牙（2）
-     * @param device
+     *
      * @return
      */
-    public static BluetoothSocket connectDevice(BluetoothDevice device) {
-        BluetoothSocket socket = null;
-        try {
-            Comment.SPP_UUID=UUID.fromString("00001106-0000-1000-8000-00805F9B34FB");
-            socket = device.createRfcommSocketToServiceRecord(
-                    UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
-            socket.connect();
-        } catch (IOException e) {
-            try {
-                socket.close();
-            } catch (IOException closeException) {
-                return null;
+    public static BluetoothSocket connectDevice() {
+        final BluetoothSocket[] socket = {null};
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+                    Comment.SPP_UUID = UUID.fromString("00001106-0000-1000-8000-00805F9B34FB");
+                    socket[0] = Comment.bluetoothDevice.createRfcommSocketToServiceRecord(Comment.SPP_UUID);
+                    socket[0].connect();
+                } catch (IOException e) {
+                    try {
+                        socket[0].close();
+                    } catch (IOException closeException) {
+
+                    }
+                }
             }
-            return null;
-        }
-        return socket;
+        }).start();
+
+        return socket[0];
     }
+
     /**
      * 解除配对
      */
     public static void unpairDevice() {
         Method removeBondMethod = null;
         try {
+//            removeBondMethod = Comment.bluetoothDevice.getClass().getMethod("removeBond", (Class[]) null);
+//            removeBondMethod.invoke(Comment.bluetoothDevice, (Object[]) null);
             removeBondMethod = Comment.bluetoothDevice.getClass().getMethod("removeBond");
             removeBondMethod.invoke(Comment.bluetoothDevice);
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
+            Log.d("aaa","ok");
+        } catch (Exception e) {
+            Log.d("aaa","error");
             e.printStackTrace();
         }
     }

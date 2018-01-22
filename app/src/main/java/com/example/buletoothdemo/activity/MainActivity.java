@@ -2,17 +2,10 @@ package com.example.buletoothdemo.activity;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.animation.Animation;
@@ -23,22 +16,17 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.buletoothdemo.R;
 import com.example.buletoothdemo.adapter.FoundAdapter;
 import com.example.buletoothdemo.adapter.PairedAdapter;
 import com.example.buletoothdemo.broadcast.BTBroadcastReceiver;
 import com.example.buletoothdemo.entity.DatasEntity;
-import com.example.buletoothdemo.service.SendSocketService;
 import com.example.buletoothdemo.util.BluetoothUtil;
 import com.example.buletoothdemo.util.Comment;
 import com.example.buletoothdemo.util.DialogUtil;
 import com.example.buletoothdemo.util.ListViewHeightMesure;
 import com.example.buletoothdemo.util.ToastUtil;
-
-import java.io.IOException;
-import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     //控件
@@ -68,13 +56,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         receiver = new BTBroadcastReceiver(mHandler);
         registerReceiver(receiver, BluetoothUtil.makeFilters());
 
-        //加载数据
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //刷新数据
         reswipeAdapter();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        if (BluetoothUtil.mBluetoothAdapter().isDiscovering()) {
+            BluetoothUtil.mBluetoothAdapter().cancelDiscovery();
+        }
         unregisterReceiver(receiver);
     }
 
@@ -123,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ListView.OnItemClickListener paireItemListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-            Comment.bluetoothDevice = mGetarrayAdapter.getItem(i);
+            Comment.bluetoothDevice = mPairedAdapter.getItem(i);
             if (BluetoothUtil.mBluetoothAdapter().isDiscovering()) {
                 BluetoothUtil.mBluetoothAdapter().cancelDiscovery();
             }

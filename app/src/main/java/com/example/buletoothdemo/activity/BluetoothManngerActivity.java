@@ -39,17 +39,22 @@ public class BluetoothManngerActivity extends AppCompatActivity {
     private LinearLayout unpair_ll;
     private LinearLayout send_photo_ll;
     private LinearLayout printer_ll;
+    private LinearLayout send_message_ll;
     private BTBroadcastReceiver receiver;
 
-    //蓝牙打印
-    private AsyncTask mConnectTask;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mannager);
+
+        init();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         receiver = new BTBroadcastReceiver(mHandler);
         registerReceiver(receiver, BluetoothUtil.makeFilters());
-        init();
     }
 
     @Override
@@ -60,31 +65,40 @@ public class BluetoothManngerActivity extends AppCompatActivity {
 
     //初始化
     private void init() {
-        if (Comment.bluetoothDevice ==null){
-            ToastUtil.showShort(this,"该蓝牙需要重新配对");
-        }
+        isDeviceBound();
         device_name = (TextView) findViewById(R.id.device_name);
-        device_name.setText(Comment.bluetoothDevice.getAddress());
+        if (Comment.bluetoothDevice.getName()==null||Comment.bluetoothDevice.getName().equals("null")){
+            device_name.setText(Comment.bluetoothDevice.getAddress());
+        }else{
+            device_name.setText(Comment.bluetoothDevice.getName());
+        }
+
         unpair_ll = (LinearLayout) findViewById(R.id.unpair_ll);
         unpair_ll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (Comment.bluetoothDevice ==null){
-                    ToastUtil.showShort(BluetoothManngerActivity.this,"该蓝牙需要重新配对");
-                }else{
-                    BluetoothUtil.unpairDevice();
-                }
+                isDeviceBound();
+                ProgressDialogUtil.show(BluetoothManngerActivity.this, "正在取消...");
+                BluetoothUtil.unpairDevice();
+
+            }
+        });
+        send_message_ll =(LinearLayout)findViewById(R.id.send_message_ll);
+        send_message_ll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                isDeviceBound();
+                sendMessageDialog();
+
             }
         });
         send_photo_ll = (LinearLayout) findViewById(R.id.send_photo_ll);
         send_photo_ll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (Comment.bluetoothDevice ==null){
-                    ToastUtil.showShort(BluetoothManngerActivity.this,"该蓝牙需要重新配对");
-                }else{
-                    sendPhotoDialog();
-                }
+                isDeviceBound();
+                sendPhotoDialog();
+
 
             }
         });
@@ -93,17 +107,15 @@ public class BluetoothManngerActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View view) {
-                if (Comment.bluetoothDevice ==null){
-                    ToastUtil.showShort(BluetoothManngerActivity.this,"该蓝牙需要重新配对");
-                }else {
-                    mConnectTask = new ConnectBluetoothTask().execute(Comment.bluetoothDevice);
-                }
+                isDeviceBound();
+                 new ConnectBluetoothTask().execute();
             }
         });
     }
 
+    //弹框选照片
     private void sendPhotoDialog() {
-        DialogUtil.ShowAlertDialog(this,"提示","请选择图片",new DialogInterface.OnClickListener() {//选择照片
+        DialogUtil.ShowAlertDialog(this, "提示", "请选择图片", new DialogInterface.OnClickListener() {//选择照片
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 //选择图片
@@ -113,29 +125,57 @@ public class BluetoothManngerActivity extends AppCompatActivity {
             }
         });
     }
+    //弹框发消息
+    private void sendMessageDialog(){
+        DialogUtil.ShowAlertDialog(this, "提示", "是否发送消息给蓝牙：" + device_name.getText().toString(), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                SendSocketService.sendMessage("你好，收到一条消息来自蓝牙："+Comment.bluetoothDevice.getAddress());
+            }
+        });
+
+    }
+
+    /**
+     * 检查设备是否存在
+     */
+    public void isDeviceBound() {
+        if (Comment.bluetoothDevice == null) {
+            ToastUtil.showShort(BluetoothManngerActivity.this, "该蓝牙需要重新配对");
+            finish();
+        }
+    }
+
 
     /**
      * 页面跳转处理
+     *
      * @param requestCode
      * @param resultCode
      * @param data
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(requestCode == Comment.IMAGE_CODE){
-            if (resultCode == this.RESULT_OK){
+        if (requestCode == Comment.IMAGE_CODE) {
+            if (resultCode == this.RESULT_OK) {
                 Uri uri = data.getData();
-                SendSocketService.sendMessageByFile(this,uri);//蓝牙发送！！！！！！
+                SendSocketService.sendMessageByFile(this, uri);//蓝牙发送！！！！！！
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
-    private Handler mHandler =new Handler(){
+
+    /**
+     * 处理广播
+     */
+    private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            if (msg.what == Comment.BOND){
-                if ((int)msg.obj == BluetoothDevice.BOND_NONE){
-                    ToastUtil.showShort(BluetoothManngerActivity.this,"已取消配对");
+            if (msg.what == Comment.BOND) {
+                if ((int) msg.obj == BluetoothDevice.BOND_NONE) {
+                    ToastUtil.showShort(BluetoothManngerActivity.this, "取消配对成功");
+                    ProgressDialogUtil.cancel();
+                    finish();
                 }
             }
         }
@@ -145,20 +185,20 @@ public class BluetoothManngerActivity extends AppCompatActivity {
 
         @Override
         protected void onPreExecute() {
-            ProgressDialogUtil.show(BluetoothManngerActivity.this,"请稍候...");
+            ProgressDialogUtil.show(BluetoothManngerActivity.this, "请稍候...");
             super.onPreExecute();
         }
 
         @Override
         protected BluetoothSocket doInBackground(BluetoothDevice... params) {
-            if(Comment.bluetoothSocket != null){
+            if (Comment.bluetoothSocket != null) {
                 try {
                     Comment.bluetoothSocket.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-            Comment.bluetoothSocket = BluetoothUtil.connectDevice(params[0]);
+            Comment.bluetoothSocket = BluetoothUtil.connectDevice();
             return Comment.bluetoothSocket;
         }
 
@@ -166,9 +206,9 @@ public class BluetoothManngerActivity extends AppCompatActivity {
         protected void onPostExecute(BluetoothSocket socket) {
             ProgressDialogUtil.cancel();
             if (socket == null || !socket.isConnected()) {
-                ToastUtil.showLong(BluetoothManngerActivity.this,"连接打印机失败");
+                ToastUtil.showShort(BluetoothManngerActivity.this, "连接打印机失败");
             } else {
-                ToastUtil.showShort(BluetoothManngerActivity.this,"成功！");
+                ToastUtil.showShort(BluetoothManngerActivity.this, "开始打印");
                 Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.bluetooth_log);
                 PrintUtil.printTest(Comment.bluetoothSocket, bitmap);
             }

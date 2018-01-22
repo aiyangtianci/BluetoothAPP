@@ -19,7 +19,6 @@ public class ProgressDialogUtil {
         mProgressDialog.setMessage(message);
         if (!mProgressDialog.isShowing()) {
             mProgressDialog.show();
-            mProgressDialog.cancel();
         }
     }
 

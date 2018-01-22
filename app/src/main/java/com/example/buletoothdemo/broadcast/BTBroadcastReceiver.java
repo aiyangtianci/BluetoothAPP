@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 import com.example.buletoothdemo.entity.DatasEntity;
 import com.example.buletoothdemo.util.Comment;
@@ -30,7 +31,6 @@ public class BTBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
-
         switch (action){
             case BluetoothAdapter.ACTION_STATE_CHANGED://蓝牙开关
                 int blueState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, 0);
@@ -41,7 +41,7 @@ public class BTBroadcastReceiver extends BroadcastReceiver {
                 break;
             case BluetoothDevice.ACTION_FOUND: // 发现设备的广播
                 device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                if (device.getBondState() != BluetoothDevice.BOND_BONDED) { // 判断是否配对过
+                if (device.getBondState() != BluetoothDevice.BOND_BONDED && !DatasEntity.mBluetoothDevices.contains(device)) { // 判断是否配对过
                     message=new Message();
                     message.what = Comment.FOUND;
                     message.obj=device;
@@ -54,6 +54,7 @@ public class BTBroadcastReceiver extends BroadcastReceiver {
 
             case BluetoothDevice.ACTION_BOND_STATE_CHANGED://配对
                 device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                Log.d("aaa","配对监听"+device.getBondState());
                 message=new Message();
                 message.what = Comment.BOND;
                 message.obj=device.getBondState();
