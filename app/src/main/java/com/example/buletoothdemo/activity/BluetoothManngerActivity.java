@@ -25,7 +25,6 @@ import com.example.buletoothdemo.util.BluetoothUtil;
 import com.example.buletoothdemo.util.Comment;
 import com.example.buletoothdemo.util.DialogUtil;
 import com.example.buletoothdemo.util.PrintUtil;
-import com.example.buletoothdemo.util.ProgressDialogUtil;
 import com.example.buletoothdemo.util.ToastUtil;
 
 import java.io.IOException;
@@ -57,6 +56,31 @@ public class BluetoothManngerActivity extends AppCompatActivity {
         registerReceiver(receiver, BluetoothUtil.makeFilters());
     }
 
+    /**
+     * 处理解绑
+     */
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            if (msg.what == Comment.BOND) {
+                if ((int) msg.obj == BluetoothDevice.BOND_NONE) {
+                    DialogUtil.CancelProgress();
+                    ToastUtil.showShort(BluetoothManngerActivity.this, "取消配对成功");
+                    finish();
+                }
+            }if (msg.what ==Comment.CONNECT){
+                ToastUtil.showShort(BluetoothManngerActivity.this,"连接成功！");
+            }if (msg.what==0){
+                ToastUtil.showShort(BluetoothManngerActivity.this, "传输成功!");
+            }if (msg.what==1){
+                ToastUtil.showShort(BluetoothManngerActivity.this, "传输失败!");
+            }if (msg.what==2){
+                ToastUtil.showShort(BluetoothManngerActivity.this, "连接失败!");
+            }
+
+        }
+    };
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -78,7 +102,7 @@ public class BluetoothManngerActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 isDeviceBound();
-                ProgressDialogUtil.show(BluetoothManngerActivity.this, "正在取消...");
+                DialogUtil.ShowProgress(BluetoothManngerActivity.this, "正在取消...");
                 BluetoothUtil.unpairDevice();
 
             }
@@ -130,7 +154,7 @@ public class BluetoothManngerActivity extends AppCompatActivity {
         DialogUtil.ShowAlertDialog(this, "提示", "是否发送消息给蓝牙：" + device_name.getText().toString(), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                SendSocketService.sendMessage("你好，收到一条消息来自蓝牙："+Comment.bluetoothDevice.getAddress());
+                SendSocketService.sendMessage("你好，收到一条消息来自蓝牙："+Comment.bluetoothDevice.getAddress(),mHandler);
             }
         });
 
@@ -146,7 +170,6 @@ public class BluetoothManngerActivity extends AppCompatActivity {
         }
     }
 
-
     /**
      * 页面跳转处理
      *
@@ -159,33 +182,17 @@ public class BluetoothManngerActivity extends AppCompatActivity {
         if (requestCode == Comment.IMAGE_CODE) {
             if (resultCode == this.RESULT_OK) {
                 Uri uri = data.getData();
-                SendSocketService.sendMessageByFile(this, uri);//蓝牙发送！！！！！！
+                SendSocketService.sendMessageByFile(this, uri,mHandler);//蓝牙发送！！！！！！
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    /**
-     * 处理广播
-     */
-    private Handler mHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            if (msg.what == Comment.BOND) {
-                if ((int) msg.obj == BluetoothDevice.BOND_NONE) {
-                    ToastUtil.showShort(BluetoothManngerActivity.this, "取消配对成功");
-                    ProgressDialogUtil.cancel();
-                    finish();
-                }
-            }
-        }
-    };
-
     class ConnectBluetoothTask extends AsyncTask<BluetoothDevice, Integer, BluetoothSocket> {
 
         @Override
         protected void onPreExecute() {
-            ProgressDialogUtil.show(BluetoothManngerActivity.this, "请稍候...");
+            DialogUtil.ShowProgress(BluetoothManngerActivity.this, "请稍候...");
             super.onPreExecute();
         }
 
@@ -198,13 +205,13 @@ public class BluetoothManngerActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
-            Comment.bluetoothSocket = BluetoothUtil.connectDevice();
+            Comment.bluetoothSocket = BluetoothUtil.connectDevice(mHandler);
             return Comment.bluetoothSocket;
         }
 
         @Override
         protected void onPostExecute(BluetoothSocket socket) {
-            ProgressDialogUtil.cancel();
+            DialogUtil.CancelProgress();
             if (socket == null || !socket.isConnected()) {
                 ToastUtil.showShort(BluetoothManngerActivity.this, "连接打印机失败");
             } else {

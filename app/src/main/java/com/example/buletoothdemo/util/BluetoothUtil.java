@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.example.buletoothdemo.entity.DatasEntity;
+
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Set;
@@ -110,7 +111,7 @@ public class BluetoothUtil {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                             Comment.bluetoothDevice.createBond();
                         } else {
-                            Method method =BluetoothDevice.class.getMethod("createBond");
+                            Method method = BluetoothDevice.class.getMethod("createBond");
                             method.invoke(Comment.bluetoothDevice);
                         }
 
@@ -173,28 +174,24 @@ public class BluetoothUtil {
      *
      * @return
      */
-    public static BluetoothSocket connectDevice() {
-        final BluetoothSocket[] socket = {null};
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
+    public static BluetoothSocket connectDevice(final Handler handler) {
+        BluetoothSocket socket = null;
+        try {
+            Comment.SPP_UUID = UUID.fromString("00001106-0000-1000-8000-00805F9B34FB");
+            socket = Comment.bluetoothDevice.createRfcommSocketToServiceRecord(Comment.SPP_UUID);
+            socket.connect();
+            handler.sendEmptyMessage(Comment.CONNECT);
+        } catch (Exception e) {
+            handler.sendEmptyMessage(2);
+            try {
+                if (socket!=null)
+                socket.close();
+            } catch (Exception closeException) {
 
-                try {
-                    Comment.SPP_UUID = UUID.fromString("00001106-0000-1000-8000-00805F9B34FB");
-                    socket[0] = Comment.bluetoothDevice.createRfcommSocketToServiceRecord(Comment.SPP_UUID);
-                    socket[0].connect();
-                } catch (IOException e) {
-                    try {
-                        socket[0].close();
-                    } catch (IOException closeException) {
-
-                    }
-                }
             }
-        }).start();
-
-        return socket[0];
-    }
+        }
+        return socket;
+}
 
     /**
      * 解除配对
@@ -206,9 +203,9 @@ public class BluetoothUtil {
 //            removeBondMethod.invoke(Comment.bluetoothDevice, (Object[]) null);
             removeBondMethod = Comment.bluetoothDevice.getClass().getMethod("removeBond");
             removeBondMethod.invoke(Comment.bluetoothDevice);
-            Log.d("aaa","ok");
+            Log.d("aaa", "ok");
         } catch (Exception e) {
-            Log.d("aaa","error");
+            Log.d("aaa", "error");
             e.printStackTrace();
         }
     }

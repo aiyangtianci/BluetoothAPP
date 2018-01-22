@@ -52,16 +52,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         findViewById();
-        //广播
-        receiver = new BTBroadcastReceiver(mHandler);
-        registerReceiver(receiver, BluetoothUtil.makeFilters());
-
+        //刷新数据
+        reswipeAdapter();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        //刷新数据
+        //广播
+        receiver = new BTBroadcastReceiver(mHandler);
+        registerReceiver(receiver, BluetoothUtil.makeFilters());
         reswipeAdapter();
     }
 
@@ -70,10 +70,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onPause();
         if (BluetoothUtil.mBluetoothAdapter().isDiscovering()) {
             BluetoothUtil.mBluetoothAdapter().cancelDiscovery();
+            setTitle("玩蓝牙");
+            rotate_img.clearAnimation();
         }
         unregisterReceiver(receiver);
     }
-
 
     /**
      * 绑定控件
@@ -111,6 +112,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Comment.bluetoothDevice = mGetarrayAdapter.getItem(i);
             if (BluetoothUtil.mBluetoothAdapter().isDiscovering()) {
                 BluetoothUtil.mBluetoothAdapter().cancelDiscovery();
+                setTitle("玩蓝牙");
+                rotate_img.clearAnimation();
             }
             BluetoothUtil.connectBound();
         }
@@ -122,6 +125,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Comment.bluetoothDevice = mPairedAdapter.getItem(i);
             if (BluetoothUtil.mBluetoothAdapter().isDiscovering()) {
                 BluetoothUtil.mBluetoothAdapter().cancelDiscovery();
+                setTitle("玩蓝牙");
+                rotate_img.clearAnimation();
             }
             startActivity(new Intent(MainActivity.this, BluetoothManngerActivity.class));
         }
@@ -135,6 +140,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 BluetoothUtil.switchBluetooth(this);
                 break;
             case R.id.swipe://刷新
+                clearAdapter();
                 reswipeAdapter();
                 break;
             case R.id.name_ll:
@@ -209,6 +215,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             break;
                         case BluetoothDevice.BOND_BONDED://配对结束
                             DialogUtil.CancelProgress();
+                            clearAdapter();
                             reswipeAdapter();
                             ToastUtil.showShort(MainActivity.this,"连接中...");
                             BluetoothUtil.connectSocket(mHandler);

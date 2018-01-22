@@ -3,6 +3,7 @@ package com.example.buletoothdemo.service;
 import android.app.Dialog;
 import android.content.Context;
 import android.net.Uri;
+import android.os.Handler;
 
 import com.example.buletoothdemo.util.BluetoothUtil;
 import com.example.buletoothdemo.util.Comment;
@@ -24,31 +25,42 @@ public class SendSocketService {
      *
      * @param message
      */
-    public static void sendMessage(final String message) {
-
-        OutputStream os = null;
-        try {
-            if (Comment.bluetoothSocket == null || !Comment.bluetoothSocket.isConnected()) {
-                Comment.bluetoothSocket = BluetoothUtil.connectDevice();
+    public static void sendMessage(final String message, final Handler handler) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                OutputStream os = null;
+                try {
+                    if (Comment.bluetoothSocket == null || !Comment.bluetoothSocket.isConnected()) {
+                        Comment.bluetoothSocket = BluetoothUtil.connectDevice(handler);
+                    }
+                    os = Comment.bluetoothSocket.getOutputStream();
+                    os.write(message.getBytes());
+                    os.flush();
+                    handler.sendEmptyMessage(0);
+                } catch (Exception e) {
+                    handler.sendEmptyMessage(1);
+                    e.printStackTrace();
+                }
             }
-            os = Comment.bluetoothSocket.getOutputStream();
-            os.write(message.getBytes());
-            os.flush();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        }).start();
     }
 
     /**
      * 发送文件
      */
-    public static void sendMessageByFile(Context context, Uri filePath) {
+    public static void sendMessageByFile(Context context, Uri filePath, final Handler handler) {
         if (Comment.bluetoothSocket == null) {
             ToastUtil.showShort(context, "蓝牙连接失败...");
         }
-        if (Comment.bluetoothSocket == null || !Comment.bluetoothSocket.isConnected()) {
-            Comment.bluetoothSocket = BluetoothUtil.connectDevice();
-        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (Comment.bluetoothSocket == null || !Comment.bluetoothSocket.isConnected()) {
+                    Comment.bluetoothSocket = BluetoothUtil.connectDevice(handler);
+                }
+            }
+        }).start();
         Dialog dialog = new DialogUtil.DefineDialog(context, 100, 0, filePath);
         dialog.show();
         try {
@@ -73,7 +85,9 @@ public class SendSocketService {
             //该方法无效
             //outputStream.write("\n".getBytes());
             outputStream.flush();
+            handler.sendEmptyMessage(0);
         } catch (IOException e) {
+            handler.sendEmptyMessage(1);
             e.printStackTrace();
         }
     }
