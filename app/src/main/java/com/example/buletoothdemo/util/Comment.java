@@ -42,6 +42,10 @@ public class Comment {
      * 蓝牙配对
      */
     public static final int BOND =104;
+    /**
+     * 蓝牙连接
+     */
+    public static final int CONNECT =105;
 
     /**
      * 选择图片后的请求码

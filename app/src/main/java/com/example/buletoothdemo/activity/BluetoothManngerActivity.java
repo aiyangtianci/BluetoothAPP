@@ -53,8 +53,8 @@ public class BluetoothManngerActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void onPause() {
+        super.onPause();
         unregisterReceiver(receiver);
     }
 

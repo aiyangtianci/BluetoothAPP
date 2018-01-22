@@ -73,10 +73,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void onPause() {
+        super.onPause();
         unregisterReceiver(receiver);
     }
+
 
     /**
      * 绑定控件
@@ -134,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.switch_ll:
+            case R.id.switch_ll://开关
                 BluetoothUtil.switchBluetooth(this);
                 break;
             case R.id.swipe://刷新
@@ -213,12 +214,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         case BluetoothDevice.BOND_BONDED://配对结束
                             DialogUtil.CancelProgress();
                             reswipeAdapter();
-                            BluetoothUtil.connectSocket(MainActivity.this);
+                            ToastUtil.showShort(MainActivity.this,"连接中...");
+                            BluetoothUtil.connectSocket(mHandler);
                             break;
                         case BluetoothDevice.BOND_NONE://取消配对/未配对
                             ToastUtil.showShort(MainActivity.this, "已取消配对");
                             break;
                     }
+                    break;
+                case Comment.CONNECT:
+                    ToastUtil.showShort(MainActivity.this,"连接成功！");
                     break;
 
             }

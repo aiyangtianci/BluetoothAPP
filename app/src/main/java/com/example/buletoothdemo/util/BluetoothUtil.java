@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+import android.os.Handler;
 
 import com.example.buletoothdemo.entity.DatasEntity;
 
@@ -112,8 +113,8 @@ public class BluetoothUtil {
     /**
      * 连接蓝牙
      */
-    public static void connectSocket(Context context) {
-        ToastUtil.showShort(context,"连接中...");
+    public static void connectSocket(final Handler handler) {
+
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -130,12 +131,22 @@ public class BluetoothUtil {
                         }
 
                         if (!Comment.bluetoothSocket.isConnected()) {
-                            Comment.bluetoothSocket.connect();//这里由SPP_UUID创建的客户端，去连接服务端。如果蓝牙端口不对称会异常。
+                            Comment.bluetoothSocket.connect();//UUID创建的客户端，去连接服务端。如果蓝牙端口协议不对称会异常。
+                            handler.sendEmptyMessage(Comment.CONNECT);
                         }
                     } catch (Exception e) {
-                        try {
-                            Comment.bluetoothSocket.close();
-                        } catch (IOException e1) {
+                        try {   //尝试第二种方式连接
+                            Comment.bluetoothSocket = (BluetoothSocket) Comment.bluetoothDevice.getClass().getMethod("createRfcommSocket", new Class[]{int.class}).invoke(Comment.bluetoothDevice, 1);
+                            if (!Comment.bluetoothSocket.isConnected()) {
+                                Comment.bluetoothSocket.connect();//UUID创建的客户端，去连接服务端。如果蓝牙端口协议不对称会异常。
+                                handler.sendEmptyMessage(Comment.CONNECT);
+                            }
+                        } catch (Exception e1) {
+                            try {
+                                Comment.bluetoothSocket.close();//最终失败
+                            } catch (IOException e2) {
+                                e2.printStackTrace();
+                            }
                             e1.printStackTrace();
                         }
                         e.printStackTrace();
@@ -153,6 +164,7 @@ public class BluetoothUtil {
     public static BluetoothSocket connectDevice(BluetoothDevice device) {
         BluetoothSocket socket = null;
         try {
+            Comment.SPP_UUID=UUID.fromString("00001106-0000-1000-8000-00805F9B34FB");
             socket = device.createRfcommSocketToServiceRecord(
                     UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"));
             socket.connect();

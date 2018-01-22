@@ -21,6 +21,8 @@ public class BTBroadcastReceiver extends BroadcastReceiver {
     private BluetoothDevice device;//蓝牙设备
     private Handler mHandler;
     private Message message;
+
+
     public BTBroadcastReceiver(Handler mHandler) {
         this.mHandler = mHandler;
     }
